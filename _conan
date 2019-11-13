@@ -247,14 +247,14 @@ _conan_options_value()
 
 _conan-alias() {
     _arguments -C \
-    '-h' \
+    $HELP_OPTIONS \
     ':reference' \
     ':target'
 }
 
 _conan-build () {
     _arguments -C \
-               '(-)'{-h,--help} \
+               $HELP_OPTIONS \
                {-c,--configure}'[Execute the configuration step]' \
                {-i,--install}'[Execute the install step ...]' \
                {-t,--test}'[Execute the install step ...]' \
@@ -280,7 +280,7 @@ _conan-config() {
     typeset -A opt_args
 
     _arguments -C \
-               '-h' \
+               $HELP_OPTIONS \
                ': :(get home install rm set)'
     # todo: how to continue?
     # mmc: message must be present. Otherwise?
@@ -329,7 +329,7 @@ _conan-download() {
 _conan-editable()
 {
     _arguments -C \
-               '-h' \
+               $HELP_OPTIONS \
                ': :(add remove list)'
 }
 
@@ -409,7 +409,7 @@ _conan-install(){
     typeset -A opt_args
 
     _arguments -C \
-        '(-)'{-h,--help} \
+        $HELP_OPTIONS \
         \
         $INSTALL_FOLDER_OPTIONS \
         {-m,--manifests}'[install MANIFESTS of dependencies]' \
@@ -446,7 +446,7 @@ _conan-profile()
     typeset -A opt_args
     # integer ret=1
     _arguments -C \
-               "-h" \
+               $HELP_OPTIONS \
                ': :(list show new update get remove)' \
                ': :->argument' && ret=0
     # todo: show -> complete.
