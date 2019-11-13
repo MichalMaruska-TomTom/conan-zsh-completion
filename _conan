@@ -263,6 +263,15 @@ _conan-copy()
     _conan_local_packages
 }
 
+_conan-download() {
+    _arguments -C \
+               $HELP_OPTIONS \
+               {-p,--package}'[Force install specified package ID]' \
+               $REMOTE_OPTIONS \
+               {-re,--recipe}'[Downloads only the recipe]'
+    #todo: '::_conan_reference
+}
+
 _conan-editable()
 {
     _arguments -C \
