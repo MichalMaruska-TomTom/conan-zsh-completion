@@ -402,6 +402,14 @@ _conan-info()
     _arguments -C $arguments
 }
 
+_conan-inspect() {
+# "Displays conanfile attributes, like name, version and options. Works locally, in local cache and remote."
+_arguments -C $HELP_OPTIONS \
+           {-a,--attribute}'[The attribute to be displayed, e.g "name"]' \
+           $REMOTE_OPTIONS \
+           $JSON_OPTIONS \
+           '--raw[Print just the value of the requested attribute]'
+}
 
 # todo: I want to complete the options immediately, not after double TAB, still hoping for a filename?
 _conan-install(){
