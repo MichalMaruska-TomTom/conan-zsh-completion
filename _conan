@@ -438,6 +438,23 @@ _conan-install(){
 # '(-g --generator)' can repeat
 }
 
+_conan-package()
+{
+    local arguments=(
+        $HELP_OPTIONS
+        $INSTALL_FOLDER_OPTIONS
+        # Defaulted to --build-folder
+        $BUILD_FOLDER_OPTIONS
+        # Defaulted to the '{build_folder}/package' folder. A relative path can
+        $PACKAGE_FOLDER_OPTIONS
+        $SOURCE_FOLDER_OPTIONS
+    )
+
+    _arguments -C $arguments
+    #positional arguments:
+    #  path Path to a folder containing a conanfile.py or to a recipe file e.g., my_folder/conanfile.py
+}
+
 _conan-profile-show()
 {
     echo "_conan-profile-show: $curcontext $CURRENT" >> $LOG_FILE
