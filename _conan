@@ -1,0 +1,470 @@
+#compdef conan
+
+# todo:
+# extract the settings items.
+# in future I can react on $CONAN_USER_HOME even set on the current cmdline.
+
+# see _git in /usr/share/zsh/functions/Completion/Unix/_git
+
+# useful commands:
+
+# conan config home
+# conan config get
+
+# get the list of packages (in local repo):
+# conan search --raw
+
+local LOG_FILE=/run/user/$(id -u)/tab-complete
+[[ -e $LOG_FILE ]] || touch $LOG_FILE
+
+typeset -a CONAN_CMD
+CONAN_CMD=(CONAN_USER_HOME=~/conan-repo/ ~/bin/conan)
+
+
+# conan search --raw
+_conan_local_packages() {
+    local storage_path=$(eval $CONAN_CMD[@] config get storage.path 2>/dev/null)
+    _path_files -/  -W "$storage_path" -g '*'
+}
+# plan:
+
+# complete
+# 1/ commands
+# 2/ single command options
+#   dirs, filename
+#   profiles
+#   pkg names
+
+consumer_cmds=(
+    install:"Installs the requirements specified in a recipe (conanfile.py or conanfile.txt)."
+    config:"Manages Conan configuration."
+    get:"Gets a file or list a directory of a given reference or package."
+    info:"Gets information about the dependency graph of a recipe."
+    search:"Searches package recipes and binaries in the local cache or in a remote."
+)
+
+local creator_cmds=(
+  new:"Creates a new package recipe template with a 'conanfile.py' and optionally, 'test_package' testing files."
+  create:"Builds a binary package for a recipe (conanfile.py)."
+  upload:"Uploads a recipe and binary packages to a remote."
+  export:"Copies the recipe (conanfile.py & associated files) to your local cache."
+  export:"-pkg Exports a recipe, then creates a package from local source and build folders."
+  test:"Tests a package consuming it from a conanfile.py with a test() method."
+)
+
+package_cmds=(
+    source:"Calls your local conanfile.py 'source()' method."
+    build:"Calls your local conanfile.py 'build()' method."
+    package:"Calls your local conanfile.py 'package()' method."
+    editable:"Manages editable packages (package that resides in the user workspace, but are consumed as if they were in the cache)."
+    workspace:"Manages a workspace (a set of packages consumed from the user workspace that belongs to the same project)."
+)
+
+misc_cmds=(
+  profile:"Lists profiles in the '.conan/profiles' folder, or shows profile details."
+  remote:"Manages the remote list and the package recipes associated to a remote."
+  user:"Authenticates against a remote with user/pass, caching the auth token."
+  imports:"Calls your local conanfile.py or conanfile.txt 'imports' method."
+  copy:"Copies conan recipes and packages to another user/channel."
+  remove:"Removes packages or binaries matching pattern from local cache or remote."
+  alias:"Creates and exports an 'alias package recipe'."
+  download:"Downloads recipe and binaries to the local cache, without using settings."
+  inspect:"Displays conanfile attributes, like name, version and options. Works locally, in local cache and remote."
+  help:"Shows help for a specific command."
+  graph:"Generates and manipulates lock files."
+)
+
+cmdtypes=( misc_cmds package_cmds creator_cmds consumer_cmds )
+# allcmds=( $misc_cmds $package_cmds $creator_cmds $consumer_cmds )
+
+_conan_commands()
+{
+    local -a allcmds
+
+    for cmdtype in $cmdtypes; do
+        # todo:
+        # local ${cmdtype}_m
+
+        set -A ${cmdtype}_m ${(P)cmdtype%%:*}
+        allcmds+=( ${(P)${:-${cmdtype}_m}} )
+        #set -A ${cmdtype}_m ${(P)cmdtype%%:*}
+        compadd $allcmds
+        # "$expl[@]" -a misc_cmds
+    done
+    # compadd "$expl[@]" -a misc_cmds
+    #allcmds
+}
+
+_conan_generator()
+{
+    generators=(cmake b2 makefile)
+    compadd -- $generators
+}
+
+_conan_path_or_reference() {
+    _files -/
+}
+
+ENV_OPTIONS=(
+    {-e,--env}'[set ENV variables]'::_env
+    # -e ENV, --env ENV     Environment variables that will be set during the package build, -e CXX=/usr/bin/clang++
+    )
+
+PROFILE_OPTIONS=(
+    {-pr,--profile}'[profile]:profile:_conan_profile_name'
+    #-pr PROFILE, --profile PROFILE
+    #                    Apply the specified profile to the install command
+    )
+
+KEEP_SOURCE_OPTIONS=(
+    {-k,-ks,--keep-source}'[Do not remove the source folder in local cache, even if the recipe changed]'
+)
+
+local OPTIONS_OPTIONS=(
+    # Define options values, e.g., -o Pkg:with_qt=true
+    {-o,--options}'[options]:option:_conan_options'
+    )
+
+SETTING_OPTIONS=({-s,--settings}'[settings override]::_conan_setting'
+
+                 #-s SETTINGS, --settings SETTINGS
+                 #       Settings to build the package, overwriting the
+                 #       defaults. e.g., -s compiler=gcc
+                )
+
+REMOTE_OPTIONS=(
+    {-r,--remote}'[look in the specified remote server]::_conan_remote'
+)
+#  -r REMOTE, --remote REMOTE Look in the specified remote server
+
+HELP_OPTIONS=(
+    '(-)'{-h,--help}'[show help message and exit]'
+)
+
+INSTALL_OPTIONS=(
+    {-if,--install-folder}'[Directory containing the conaninfo.txt and conanbuildinfo.txt files]:install dir:_files -/'
+)
+
+UPDATE_OPTIONS=(
+    {-u,--update}'[Check updates exist from upstream remotes]'
+)
+
+local LOCKFILE_OPTIONS=({-l,--lockfile}"[Path to a lockfile or folder containing 'conan.lock']:lockfile:_files -g \*.lock")
+#todo: "can be updated if packages change"
+
+conan_build_policies=(all never missing cascade outdated)
+
+# todo: cache it!
+typeset -a conan_profiles
+
+_conan_profile_name(){
+    # integer ret=1
+    # local
+    if [[ "$#conan_profiles" = 0 ]]
+    then
+        echo "reading in the profiles" >>$LOG_FILE
+        conan_profiles=( $(eval $CONAN_CMD[@] profile list 2>>$LOG_FILE) )
+    fi
+
+    foreach line ($conan_profiles) {
+        # compadd -a AVAILABLE
+        # echo "adding $line" >> $LOG_FILE
+        compadd -- $line && ret=0
+    }
+#     return $ret
+}
+
+_conan_options()
+{
+    local recipe="."
+    typeset -a package_options
+
+    package_options=( $(eval $CONAN_CMD inspect -a options $recipe 2>/dev/null |
+                            sed -n  's/^ \+\([^ :].*\):.*$/\1/;T;p') )
+
+    foreach line ($package_options[2,-1]) {
+        # compadd -a AVAILABLE
+        # echo "adding $line" >> $LOG_FILE
+        compadd -- "$line" && ret=0
+    }
+}
+
+# xxx=y<TAB>
+_conan_options_value()
+{
+    local recipe="."
+
+    typeset -a package_options
+    package_options=( $(eval $CONAN_CMD inspect -a options $recipe 2>/dev/null |
+                            sed -n  's/^ \+\([^ :].*\):.*$/\1/;T;p') )
+
+    foreach line ($package_options[2,-1]) {
+        # compadd -a AVAILABLE
+        # echo "adding $line" >> $LOG_FILE
+        compadd -- "$line" && ret=0
+    }
+}
+
+### `Commands'
+
+_conan-alias() {
+    _arguments -C \
+    '-h' \
+    ':reference' \
+    ':target'
+}
+
+_conan-build () {
+    _arguments -C \
+               '(-)'{-h,--help} \
+               {-c,--configure}'[Execute the configuration step]' \
+               {-i,--install}'[Execute the install step ...]' \
+               {-t,--test}'[Execute the install step ...]' \
+               {-bf,--build-folder}'[Build folder]:build directories:_files -/' \
+               $INSTALL_OPTIONS \
+               {-pf,--package-folder}'[Directory to install the package]:package folder:_files -/' \
+               {-sf,--source-folder}"[Directory containing the sources. (default conanfile\'s directory)]:source dir:_files -/" \
+               '::_files'
+
+    # source -> contains .git?
+
+    # -i should_install=True). When specified, configure/build/test won't run
+    # unless --configure/--build/--test specified
+
+
+    # -c: (variable should_configure=True). When specified, build/install/test
+    # won't run unless --build/--install/--test specified
+
+}
+
+_conan-config() {
+    local context state state_descr line
+    typeset -A opt_args
+
+    _arguments -C \
+               '-h' \
+               ': :(get home install rm set)'
+    # todo: how to continue?
+    # mmc: message must be present. Otherwise?
+}
+
+_conan-copy()
+{
+    _conan_local_packages
+}
+
+_conan-editable()
+{
+    _arguments -C \
+               '-h' \
+               ': :(add remove list)'
+}
+
+# so message is compulsary?
+_conan-export() {
+    _arguments -C \
+        $HELP_OPTIONS \
+        $KEEP_SOURCE_OPTIONS \
+        $LOCKFILE_OPTIONS
+}
+
+_conan-info()
+{
+    arguments=(
+        $HELP_OPTIONS
+        '--paths[Show package paths in local cache]'
+        {-bo,--build-order}'[given a modified reference, return an ordered list to build (CI)]'
+        {-g,--graph}'[Creates file with project dependencies graph.DOT/HTML depending on the filename]'
+        $INSTALL_OPTIONS
+        {-j,--json}'[Path to a json file where the information will be written]'
+        {-n,--only}'[Show only the specified fields]: : (id build_id remote url license requires update required date author)'
+        # todo: '--paths' information can also be filtered with options
+                        # (export_folder build_folder package_folder source_folder)
+                        #Use '--only None' to show only references.
+        '--package-filter[Print information only for packages that match the MyPackage*]'
+        {-db,--dry-build}'[Apply the --build argument to output the information, as it would be done by the install command]'
+        {-b,--build}'[Given a build policy, return an ordered list of packages that would be built from sources during the install command]: :($conan_build_policies)'
+        $ENV_OPTIONS
+        $PROFILE_OPTIONS
+        $OPTIONS_OPTIONS
+        $SETTING_OPTIONS
+        $REMOTE_OPTIONS
+        $UPDATE_OPTIONS
+        $LOCKFILE_OPTIONS # fixme: Lockfile can be updated if packages change
+        ': :_conan_path_or_reference'
+    )
+    _arguments -C $arguments
+}
+
+
+# todo: I want to complete the options immediately, not after double TAB, still hoping for a filename?
+_conan-install () {
+    _arguments -C \
+        '(-)'{-h,--help} \
+        \
+        {-if,--install-folder}'[Directory containing the conaninfo.txt and conanbuildinfo.txt files]:install dir:_files -/' \
+        {-m,--manifests}'[install MANIFESTS of dependencies]' \
+        $ENV_OPTIONS \
+        '--no-imports[avoid running imports]'  \
+        $PROFILE_OPTIONS \
+        $OPTIONS_OPTIONS \
+        $SETTING_OPTIONS \
+        {-g,--generator}'[Generator]:generator:_conan_generator' \
+        $REMOTE_OPTIONS \
+        $UPDATE_OPTIONS \
+        $LOCKFILE_OPTIONS \
+        '::_conan_path_or_reference'
+
+# '(-g --generator)' can repeat
+}
+
+
+_conan-profile-show()
+{
+    echo "_conan-profile-show: $curcontext $CURRENT" >> $LOG_FILE
+    # $words[$CURRENT]
+    _conan_profile_name
+    # _arguments -C '2:profile-name:(This That)'
+
+    #'1:profile-name:(thiS thaT)' \
+        # here:
+        #       '*:profile-name:(this that)' &&
+    # ret=0
+}
+
+_conan-profile()
+{
+    local context state state_descr line
+    typeset -A opt_args
+    # integer ret=1
+    _arguments -C \
+               "-h" \
+               ': :(list show new update get remove)' \
+               ': :->argument' && ret=0
+    # todo: show -> complete.
+    # list
+    # show ... name
+    # new
+    # update  ... name
+    # gete ...name
+    # remove ... name
+    case $state in
+        (argument)
+            # context -> last word?
+            echo $curcontext >> $LOG_FILE
+
+            # :complete:conan-profile:argument-2
+            # so rewrite it to:
+            # :complete:conan-profile-show:
+            local curcontext=${curcontext%:*:*}:conan-$words[1]-$words[2]:
+            echo "modified to $curcontext" >> $LOG_FILE
+
+            # _tags:comptags:36: nesting level too deep
+            if ! _call_function ret _conan-$words[1]-$words[2]; then
+                _message "unknown sub-command: $words[1]"
+            fi
+            ;;
+        *)
+            _message "unknown sub-command: $words[2]"
+            ;;
+    esac
+    # return $ret
+}
+
+
+_conan-remove()
+{
+    arguments=(
+               $HELP_OPTIONS
+               {-b,--builds}''
+               {-f,--force}'[Remove without requesting a confirmation]'
+               {-l,--locks}'[Remove locks]'
+               {-o,--outdated}'[Remove only outdated from recipe packages. only used with a reference!]'
+               {-p,--packages}'[Select package to remove specifying the package ID]'
+               {-q,--query}"[Packages query: 'os=Windows AND (arch=x86 OR compiler=gcc)'. The 'pattern_or_reference' parameter]"
+               $REMOTE_OPTIONS
+               {-s,--src}'[Remove source folders]'
+               {-t,--system-reqs}'[Remove system_reqs folders]'
+               ':pattern_or_reference:'
+    )
+    _arguments -C $arguments
+}
+
+_conan-remote()
+{
+    # how to add explanation?
+    typeset -a descriptions
+    descriptions=(
+        "list:List current remotes"
+        "add:Add a remote"
+        "remove:Remove a remote"
+        "update:Update the remote url"
+        "rename:Update the remote name"
+        "list_ref:List the package recipes and its associated remotes"
+        "add_ref:Associate a recipe's reference to a remote"
+        "remove_ref:Dissociate a recipe's reference and its remote"
+        "update_ref:Update the remote associated with a package recipe"
+        "list_pref:List the package binaries and its associated remotes"
+        "add_pref:Associate a package reference to a remote"
+        "remove_pref:Dissociate a package's reference and its remote"
+        "update_pref:Update the remote associated with a binary package"
+        "clean:Clean the list of remotes and all recipe-remoteassociations"
+        "enable:Enable a remote"
+        "disable:Disable a remote"
+    )
+    _describe "Manages the remote list and the package recipes associated to a remote." descriptions
+
+    #    _arguments -C ': :(list add remove update rename list_ref add_ref list_pref add_pref remove_pref update_pref clean enable disable)'
+    # List the package recipes and its associated remotes
+}
+
+_conan-source()
+{
+
+}
+
+local context state state_descr line
+typeset -A opt_args
+
+integer ret=1
+_arguments -C \
+           '(-): :->command' \
+           '(-)*:: :->option-or-argument' && return 0
+
+#      '(-): :->command' \
+# why space ^
+# so none of those options after the command.
+
+#      '(-)*:: :->option-or-argument' && return
+
+case $state in
+    (command)
+        _conan_commands && ret=0
+        ;;
+    (option-or-argument)
+        # In addition to $state and $state_descr, _arguments also sets
+        #  the global parameters 'context', 'line' and 'opt_args' as
+
+     # Furthermore, during the evaluation of the ACTION the context name
+     # in the curcontext parameter is altered to append the same string
+     # that is stored in the context parameter.
+
+     # The option -C tells _arguments to modify the curcontext parameter
+     # for an action of the form '->STATE'.  This is the standard
+
+        # Modify the curcontext parameter for an action of the form
+        #  '->STATE'.  This is discussed in detail below.
+        curcontext=${curcontext%:*:*}:conan-$words[1]:
+        if ! _call_function ret _conan-$words[1]; then
+            _message "unknown sub-command: $words[1]"
+        else
+            ret=0
+        fi
+esac
+
+# compadd "$expl[@]" -O allmatching -a allcmds
+# _alternative $alts
+# alts+=( "${cmdtype//_/-}:${${cmdtype//_/ }%%(e|)s}:compadd ${(e)disp} -a ${cmdtype}_m" )
+
+# compadd ${(e)disp} -a ${cmdtype}_m
+return ret
