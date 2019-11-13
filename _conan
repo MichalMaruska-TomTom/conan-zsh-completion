@@ -144,6 +144,7 @@ HELP_OPTIONS=(
 INSTALL_OPTIONS=(
     {-if,--install-folder}'[Directory containing the conaninfo.txt and conanbuildinfo.txt files]:install dir:_files -/'
 )
+JSON_OPTIONS=({-j,--json}'[Path to a json file where the information will be written]:file:_files *.json')
 
 UPDATE_OPTIONS=(
     {-u,--update}'[Check updates exist from upstream remotes]'
@@ -263,6 +264,33 @@ _conan-copy()
     _conan_local_packages
 }
 
+_conan-create()
+{
+
+    local arguments=(
+        $HELP_OPTIONS
+               $JSON_OPTIONS
+               $KEEP_SOURCE_OPTIONS
+               {-kb,--keep-build}'[Do not remove the build folder in local cache.]'
+               # implies -ks
+               {-ne,--not-export}'[Do not export the conanfile.py (use older?)]'
+               {-tbf,--test-build-folder}'[TEST_BUILD_FOLDER]:test folder:_files -/'
+               {-m,--manifests}'[Install dependencies manifests in folder for later]:manifests:_files'
+               {-mi,--manifests-interactive}'[Install dependencies manifests in folder for later..]'
+               {-v,--verify}'[Verify dependencies manifests against stored ones]'
+               {-b,--build}"[--build Build all from source, --build=never Never build, --build=missing,--build=cascade  --build=outdated, --build=pattern]: :($conan_build_policies)"
+               $ENV_OPTIONS
+               $PROFILE_OPTIONS
+               $OPTIONS_OPTIONS
+               $SETTING_OPTIONS
+               $REMOTE_OPTIONS
+               $UPDATE_OPTIONS
+               $LOCKFILE_OPTIONS
+    )
+  #                   path [reference]
+    _arguments -C $arguments
+}
+
 _conan-download() {
     _arguments -C \
                $HELP_OPTIONS \
@@ -295,7 +323,7 @@ _conan-info()
         {-bo,--build-order}'[given a modified reference, return an ordered list to build (CI)]'
         {-g,--graph}'[Creates file with project dependencies graph.DOT/HTML depending on the filename]'
         $INSTALL_OPTIONS
-        {-j,--json}'[Path to a json file where the information will be written]'
+        $JSON_OPTIONS
         {-n,--only}'[Show only the specified fields]: : (id build_id remote url license requires update required date author)'
         # todo: '--paths' information can also be filtered with options
                         # (export_folder build_folder package_folder source_folder)
