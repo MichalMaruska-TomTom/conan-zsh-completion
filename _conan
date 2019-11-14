@@ -551,6 +551,14 @@ _conan-remove()
     _arguments -C $arguments
 }
 
+# todo: connect it to conan-remote:
+_conan-remote-list()
+{
+    : \
+    $HELP_OPTIONS \
+    $RAW_OPTIONS
+}
+
 _conan-remote()
 {
     # how to add explanation?
