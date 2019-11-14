@@ -35,7 +35,7 @@ _conan_local_packages() {
 #   profiles
 #   pkg names
 
-consumer_cmds=(
+local consumer_cmds=(
     install:"Installs the requirements specified in a recipe (conanfile.py or conanfile.txt)."
     config:"Manages Conan configuration."
     get:"Gets a file or list a directory of a given reference or package."
@@ -52,7 +52,7 @@ local creator_cmds=(
   test:"Tests a package consuming it from a conanfile.py with a test() method."
 )
 
-package_cmds=(
+local package_cmds=(
     source:"Calls your local conanfile.py 'source()' method."
     build:"Calls your local conanfile.py 'build()' method."
     package:"Calls your local conanfile.py 'package()' method."
@@ -60,7 +60,7 @@ package_cmds=(
     workspace:"Manages a workspace (a set of packages consumed from the user workspace that belongs to the same project)."
 )
 
-misc_cmds=(
+local misc_cmds=(
   profile:"Lists profiles in the '.conan/profiles' folder, or shows profile details."
   remote:"Manages the remote list and the package recipes associated to a remote."
   user:"Authenticates against a remote with user/pass, caching the auth token."
@@ -74,7 +74,7 @@ misc_cmds=(
   graph:"Generates and manipulates lock files."
 )
 
-cmdtypes=( misc_cmds package_cmds creator_cmds consumer_cmds )
+local cmdtypes=( misc_cmds package_cmds creator_cmds consumer_cmds )
 # allcmds=( $misc_cmds $package_cmds $creator_cmds $consumer_cmds )
 
 _conan_commands()
@@ -105,7 +105,7 @@ _conan_path_or_reference() {
     _files -/
 }
 
-ENV_OPTIONS=(
+local ENV_OPTIONS=(
     {-e,--env}'[set ENV variables]'::_env
     # -e ENV, --env ENV     Environment variables that will be set during the package build, -e CXX=/usr/bin/clang++
     )
@@ -116,7 +116,7 @@ PROFILE_OPTIONS=(
     #                    Apply the specified profile to the install command
     )
 
-KEEP_SOURCE_OPTIONS=(
+local KEEP_SOURCE_OPTIONS=(
     {-k,-ks,--keep-source}'[Do not remove the source folder in local cache, even if the recipe changed]'
 )
 
@@ -125,7 +125,7 @@ local OPTIONS_OPTIONS=(
     {-o,--options}'[options]:option:_conan_options'
     )
 
-SETTING_OPTIONS=({-s,--settings}'[settings override]::_conan_setting'
+local SETTING_OPTIONS=({-s,--settings}'[settings override]::_conan_setting'
 
                  #-s SETTINGS, --settings SETTINGS
                  #       Settings to build the package, overwriting the
@@ -141,7 +141,7 @@ HELP_OPTIONS=(
     '(-)'{-h,--help}'[show help message and exit]'
 )
 
-INSTALL_OPTIONS=(
+local INSTALL_OPTIONS=(
     {-if,--install-folder}'[Directory containing the conaninfo.txt and conanbuildinfo.txt files]:install dir:_files -/'
 )
 JSON_OPTIONS=({-j,--json}'[Path to a json file where the information will be written]:file:_files *.json')
@@ -200,6 +200,18 @@ _conan_options()
     }
 }
 
+INSTALL_FOLDER_OPTIONS=({-if,--install-folder}'[Directory containing the conaninfo.txt and conanbuildinfo.txt files]:install dir:_files -/')
+BUILD_FOLDER_OPTIONS=(
+    {-bf,--build-folder}'[Build folder]:build directories:_files -/'
+)
+
+PACKAGE_FOLDER_OPTIONS=({-pf,--package-folder}'[Directory to install the package]:package folder:_files -/' )
+
+SOURCE_FOLDER_OPTIONS=(
+    {-sf,--source-folder}"[Directory containing the sources. Defaulted to the conanfile's directory]:source:_files -/"
+    # {-sf,--source-folder}"[Directory containing the sources. (default conanfile\'s directory)]:source dir:_files -/"
+    )
+
 # xxx=y<TAB>
 _conan_options_value()
 {
@@ -231,10 +243,10 @@ _conan-build () {
                {-c,--configure}'[Execute the configuration step]' \
                {-i,--install}'[Execute the install step ...]' \
                {-t,--test}'[Execute the install step ...]' \
-               {-bf,--build-folder}'[Build folder]:build directories:_files -/' \
+               $BUILD_FOLDER_OPTIONS \
                $INSTALL_OPTIONS \
-               {-pf,--package-folder}'[Directory to install the package]:package folder:_files -/' \
-               {-sf,--source-folder}"[Directory containing the sources. (default conanfile\'s directory)]:source dir:_files -/" \
+               $PACKAGE_FOLDER_OPTIONS \
+               $SOURCE_FOLDER_OPTIONS \
                '::_files'
 
     # source -> contains .git?
@@ -266,7 +278,6 @@ _conan-copy()
 
 _conan-create()
 {
-
     local arguments=(
         $HELP_OPTIONS
                $JSON_OPTIONS
@@ -350,7 +361,7 @@ _conan-help()
 
 _conan-info()
 {
-    arguments=(
+    local arguments=(
         $HELP_OPTIONS
         '--paths[Show package paths in local cache]'
         {-bo,--build-order}'[given a modified reference, return an ordered list to build (CI)]'
@@ -378,11 +389,14 @@ _conan-info()
 
 
 # todo: I want to complete the options immediately, not after double TAB, still hoping for a filename?
-_conan-install () {
+_conan-install(){
+    local context state state_descr line
+    typeset -A opt_args
+
     _arguments -C \
         '(-)'{-h,--help} \
         \
-        {-if,--install-folder}'[Directory containing the conaninfo.txt and conanbuildinfo.txt files]:install dir:_files -/' \
+        $INSTALL_FOLDER_OPTIONS \
         {-m,--manifests}'[install MANIFESTS of dependencies]' \
         $ENV_OPTIONS \
         '--no-imports[avoid running imports]'  \
@@ -393,7 +407,7 @@ _conan-install () {
         $REMOTE_OPTIONS \
         $UPDATE_OPTIONS \
         $LOCKFILE_OPTIONS \
-        '::_conan_path_or_reference'
+        ': :_conan_path_or_reference'
 
 # '(-g --generator)' can repeat
 }
@@ -453,7 +467,7 @@ _conan-profile()
 
 _conan-remove()
 {
-    arguments=(
+    local arguments=(
                $HELP_OPTIONS
                {-b,--builds}''
                {-f,--force}'[Remove without requesting a confirmation]'
