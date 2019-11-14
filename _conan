@@ -358,6 +358,13 @@ _conan-export-pkg() {
     _arguments -C $all_args
 }
 
+_conan-get()
+{
+    _arguments -C \
+               $HELP_OPTIONS \
+               $REMOTE_OPTIONS \
+               $RAW_OPTIONS
+}
 
 _conan-graph()
 {
