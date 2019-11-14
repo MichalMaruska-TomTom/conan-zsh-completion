@@ -48,7 +48,7 @@ local creator_cmds=(
   create:"Builds a binary package for a recipe (conanfile.py)."
   upload:"Uploads a recipe and binary packages to a remote."
   export:"Copies the recipe (conanfile.py & associated files) to your local cache."
-  export:"-pkg Exports a recipe, then creates a package from local source and build folders."
+  export-pkg:"Exports a recipe, then creates a package from local source and build folders."
   test:"Tests a package consuming it from a conanfile.py with a test() method."
 )
 
@@ -340,6 +340,24 @@ _conan-export() {
         $KEEP_SOURCE_OPTIONS \
         $LOCKFILE_OPTIONS
 }
+
+_conan-export-pkg() {
+    local all_args=(
+        $HELP_OPTIONS
+        $BUILD_FOLDER_OPTIONS
+        $ENV_OPTIONS
+        {-f,--force}'[Overwrite existing package if existing]'
+        $INSTALL_FOLDER_OPTIONS
+        $OPTIONS_OPTIONS
+        $SETTING_OPTIONS
+        $SOURCE_FOLDER_OPTIONS
+        $JSON_OPTIONS
+        # Path to a json file where the install information will be written
+        $LOCKFILE_OPTIONS
+    )
+    _arguments -C $all_args
+}
+
 
 _conan-graph()
 {
