@@ -315,6 +315,39 @@ _conan-export() {
         $LOCKFILE_OPTIONS
 }
 
+_conan-graph()
+{
+    _arguments -C \
+        $HELP_OPTIONS
+    descriptions=(
+        # these  have a subcommand help!
+        "update-lock"
+        "build-order"
+        "lock"
+
+        "update-lock:merge two lockfiles"
+        "build-order:Returns build-order"
+        "lock:create a lockfile"
+        )
+
+    _describe \
+        "Generates and manipulates lock files." descriptions
+}
+
+_conan-help()
+{
+    local cmdtype
+    local -a allcmds
+
+    for cmdtype in $cmdtypes; do
+        set -A ${cmdtype}_m ${(P)cmdtype%%:*}
+        local allcmds+=( ${(P)${:-${cmdtype}_m}} )
+        #set -A ${cmdtype}_m ${(P)cmdtype%%:*}
+        compadd $allcmds
+        # "$expl[@]" -a misc_cmds
+    done
+}
+
 _conan-info()
 {
     arguments=(
@@ -364,7 +397,6 @@ _conan-install () {
 
 # '(-g --generator)' can repeat
 }
-
 
 _conan-profile-show()
 {
