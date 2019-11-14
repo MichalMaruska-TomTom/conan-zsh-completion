@@ -95,16 +95,18 @@ _conan_commands()
     #allcmds
 }
 
-_conan_generator()
+
+# present the commands as block, with documentation:
+_conan_commands1()
 {
-    generators=(cmake b2 makefile)
-    compadd -- $generators
+    _describe -t consumer "Consumer commands" consumer_cmds
+    _describe -t creator "Creator commands" creator_cmds
+    _describe -t misc "Misc commands" misc_cmds
+    _describe -t package "Package development commands" package_cmds
 }
 
-_conan_path_or_reference() {
-    _files -/
-}
 
+## common options:
 local ENV_OPTIONS=(
     {-e,--env}'[set ENV variables]'::_env
     # -e ENV, --env ENV     Environment variables that will be set during the package build, -e CXX=/usr/bin/clang++
@@ -132,31 +134,53 @@ local SETTING_OPTIONS=({-s,--settings}'[settings override]::_conan_setting'
                  #       defaults. e.g., -s compiler=gcc
                 )
 
-REMOTE_OPTIONS=(
-    {-r,--remote}'[look in the specified remote server]::_conan_remote'
+local REMOTE_OPTIONS=(
+    {-r,--remote}'[look in the specified remote server]:conan remote:_conan_remote'
 )
 #  -r REMOTE, --remote REMOTE Look in the specified remote server
 
-HELP_OPTIONS=(
-    '(-)'{-h,--help}'[show help message and exit]'
-)
+local HELP_OPTIONS=('(-)'{-h,--help}'[show help message and exit]')
 
 local INSTALL_OPTIONS=(
     {-if,--install-folder}'[Directory containing the conaninfo.txt and conanbuildinfo.txt files]:install dir:_files -/'
 )
-JSON_OPTIONS=({-j,--json}'[Path to a json file where the information will be written]:file:_files *.json')
 
-UPDATE_OPTIONS=(
-    {-u,--update}'[Check updates exist from upstream remotes]'
-)
+local JSON_OPTIONS=({-j,--json}'[Path to a json file where the information will be written]:file:_files *.json')
+local RAW_OPTIONS=({-raw,--raw}'[Do not decorate the text]')
+
+local UPDATE_OPTIONS=({-u,--update}'[Check updates exist from upstream remotes]')
 
 local LOCKFILE_OPTIONS=({-l,--lockfile}"[Path to a lockfile or folder containing 'conan.lock']:lockfile:_files -g \*.lock")
 #todo: "can be updated if packages change"
 
-conan_build_policies=(all never missing cascade outdated)
-
 # todo: cache it!
 typeset -a conan_profiles
+
+local INSTALL_FOLDER_OPTIONS=({-if,--install-folder}'[Directory containing the conaninfo.txt and conanbuildinfo.txt files]:install dir:_files -/')
+
+local BUILD_FOLDER_OPTIONS=({-bf,--build-folder}'[Build folder]:build directories:_files -/')
+
+
+local PACKAGE_FOLDER_OPTIONS=({-pf,--package-folder}'[Directory to install the package]:package folder:_files -/' )
+
+local SOURCE_FOLDER_OPTIONS=(
+    {-sf,--source-folder}"[Directory containing the sources. Defaulted to the conanfile's directory]:source:_files -/"
+    # {-sf,--source-folder}"[Directory containing the sources. (default conanfile\'s directory)]:source dir:_files -/"
+    )
+
+
+## value completions:
+local conan_build_policies=(all never missing cascade outdated)
+
+_conan_path_or_reference() {
+    _files -/
+}
+
+_conan_generator()
+{
+    local generators=(cmake b2 makefile)
+    compadd -- $generators
+}
 
 _conan_profile_name(){
     # integer ret=1
@@ -200,17 +224,8 @@ _conan_options()
     }
 }
 
-INSTALL_FOLDER_OPTIONS=({-if,--install-folder}'[Directory containing the conaninfo.txt and conanbuildinfo.txt files]:install dir:_files -/')
-BUILD_FOLDER_OPTIONS=(
-    {-bf,--build-folder}'[Build folder]:build directories:_files -/'
-)
 
-PACKAGE_FOLDER_OPTIONS=({-pf,--package-folder}'[Directory to install the package]:package folder:_files -/' )
 
-SOURCE_FOLDER_OPTIONS=(
-    {-sf,--source-folder}"[Directory containing the sources. Defaulted to the conanfile's directory]:source:_files -/"
-    # {-sf,--source-folder}"[Directory containing the sources. (default conanfile\'s directory)]:source dir:_files -/"
-    )
 
 # xxx=y<TAB>
 _conan_options_value()
@@ -532,7 +547,7 @@ _arguments -C \
 
 case $state in
     (command)
-        _conan_commands && ret=0
+        _conan_commands1 && ret=0
         ;;
     (option-or-argument)
         # In addition to $state and $state_descr, _arguments also sets
