@@ -166,7 +166,9 @@ local SOURCE_FOLDER_OPTIONS=(
     {-sf,--source-folder}"[Directory containing the sources. Defaulted to the conanfile's directory]:source:_files -/"
     # {-sf,--source-folder}"[Directory containing the sources. (default conanfile\'s directory)]:source dir:_files -/"
     )
-
+local QUERY_OPTIONS=(
+    {-q,--query}"[Packages query: 'os=Windows AND (arch=x86 OR compiler=gcc)'. The 'pattern_or_reference' parameter]"
+    )
 
 ## value completions:
 local conan_build_policies=(all never missing cascade outdated)
@@ -547,7 +549,7 @@ _conan-remove()
                {-l,--locks}'[Remove locks]'
                {-o,--outdated}'[Remove only outdated from recipe packages. only used with a reference!]'
                {-p,--packages}'[Select package to remove specifying the package ID]'
-               {-q,--query}"[Packages query: 'os=Windows AND (arch=x86 OR compiler=gcc)'. The 'pattern_or_reference' parameter]"
+               $QUERY_OPTIONS
                $REMOTE_OPTIONS
                {-s,--src}'[Remove source folders]'
                {-t,--system-reqs}'[Remove system_reqs folders]'
