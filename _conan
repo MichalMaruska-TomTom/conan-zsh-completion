@@ -280,6 +280,12 @@ _conan-build () {
 
 }
 
+_conan-config-set() {
+    _arguments -C \
+               $HELP_OPTIONS \
+               ":item to print::"
+}
+
 # prepend each with log.
 local log_items=(run_to_output run_to_file level print_run_commands)
 local general_items=(default_profile
