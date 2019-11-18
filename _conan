@@ -593,6 +593,27 @@ _conan-remote()
     # List the package recipes and its associated remotes
 }
 
+_conan-search()
+{
+    local context state state_descr line
+    # typeset -A opt_args
+
+    local arguments=(
+        $HELP_OPTIONS
+        {-o,--outdated}'[Show only outdated from recipe packages.]'
+        $QUERY_OPTIONS
+        $REMOTE_OPTIONS
+        '--case-sensitive[Make a case-sensitive search.]'
+        '--raw[Print just the list of recipes]'
+        '--table[Outputs html file with a table of binaries. Only valid for a reference search]'
+        #TABLE
+        $JSON_OPTIONS
+        {-rev,--revisions}'[Get a list of revisions for a reference or a package]'
+    )
+
+    _arguments -C $arguments
+}
+
 _conan-source()
 {
 
