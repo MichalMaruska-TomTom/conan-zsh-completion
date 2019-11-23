@@ -170,6 +170,12 @@ local QUERY_OPTIONS=(
     {-q,--query}"[Packages query: 'os=Windows AND (arch=x86 OR compiler=gcc)'. The 'pattern_or_reference' parameter]"
     )
 
+local MANIFEST_OPTIONS=(
+    # fixme: avoid the same one!
+    '(-mi --manifests-interactive -m --manifests)'{-m,--manifests}'[Install dependencies manifests in folder for later]::manifests:_files'
+    '(-mi --manifests-interactive -m --manifests)'{-mi,--manifests-interactive}'[Install dependencies manifests in folder for later..]::manifests:_files'
+)
+
 ## value completions:
 local conan_build_policies=(all never missing cascade outdated)
 
@@ -308,8 +314,7 @@ _conan-create()
                # implies -ks
                {-ne,--not-export}'[Do not export the conanfile.py (use older?)]'
                {-tbf,--test-build-folder}'[TEST_BUILD_FOLDER]:test folder:_files -/'
-               {-m,--manifests}'[Install dependencies manifests in folder for later]:manifests:_files'
-               {-mi,--manifests-interactive}'[Install dependencies manifests in folder for later..]'
+               $MANIFEST_OPTIONS
                {-v,--verify}'[Verify dependencies manifests against stored ones]'
                {-b,--build}"[--build Build all from source, --build=never Never build, --build=missing,--build=cascade  --build=outdated, --build=pattern]: :($conan_build_policies)"
                $ENV_OPTIONS
@@ -455,7 +460,7 @@ _conan-install(){
         $HELP_OPTIONS \
         \
         $INSTALL_FOLDER_OPTIONS \
-        {-m,--manifests}'[install MANIFESTS of dependencies]' \
+        $MANIFEST_OPTIONS \
         $ENV_OPTIONS \
         '--no-imports[avoid running imports]'  \
         $PROFILE_OPTIONS \
