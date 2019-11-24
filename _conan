@@ -175,6 +175,10 @@ local MANIFEST_OPTIONS=(
     '(-mi --manifests-interactive -m --manifests)'{-mi,--manifests-interactive}'[Install dependencies manifests in folder for later..]::manifests:_files'
 )
 
+local VERIFY_OPTIONS=(
+    {-v,--verify}'[Verify dependencies manifests against stored ones]'
+)
+
 ## value completions:
 local conan_build_policies=(never missing cascade outdated) # all
 local BUILD_WHAT_OPTIONS=(
@@ -336,7 +340,7 @@ _conan-create()
                {-ne,--not-export}'[Do not export the conanfile.py (use older?)]'
                {-tbf,--test-build-folder}'[TEST_BUILD_FOLDER]:test folder:_files -/'
                $MANIFEST_OPTIONS
-               {-v,--verify}'[Verify dependencies manifests against stored ones]'
+               $VERIFY_OPTIONS
                $BUILD_WHAT_OPTIONS
                $ENV_OPTIONS
                $PROFILE_OPTIONS
@@ -526,6 +530,7 @@ _conan-install(){
         $INSTALL_FOLDER_OPTIONS \
         $MANIFEST_OPTIONS \
         $ENV_OPTIONS \
+        $VERIFY_OPTIONS \
         '--no-imports[avoid running imports]'  \
         $PROFILE_OPTIONS \
         $OPTIONS_OPTIONS \
