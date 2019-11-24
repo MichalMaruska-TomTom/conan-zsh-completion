@@ -399,23 +399,66 @@ _conan-get()
                $RAW_OPTIONS
 }
 
+
 _conan-graph()
 {
+    local curcontext=$curcontext \
+          state line ret=1
+    declare -A opt_args
+
     _arguments -C \
-        $HELP_OPTIONS
-    descriptions=(
-        # these  have a subcommand help!
-        "update-lock"
-        "build-order"
-        "lock"
+               $HELP_OPTIONS \
+               ': :->command' \
+               '*:: :->option-or-argument' && ret=0
 
-        "update-lock:merge two lockfiles"
-        "build-order:Returns build-order"
-        "lock:create a lockfile"
-        )
+    case $state in
+        (command)
+            declare -a commands
+            commands=(
+                # these  have a subcommand help!
+                "update-lock:merge two lockfiles"
+                "build-order:Returns build-order"
+                "lock:create a lockfile"
+            )
 
-    _describe \
-        "Generates and manipulates lock files." descriptions
+            _describe \
+                "Generates and manipulates lock files." commands && ret=0
+            ;;
+        (option-or-argument)
+            curcontext=${curcontext%:*}-$line[1]:
+
+            case $line[1] in
+                (lock)
+                    _arguments -C \
+                               $HELP_OPTIONS \
+                               $BUILD_WHAT_OPTIONS \
+                               $ENV_OPTIONS \
+                               $OPTIONS_OPTIONS \
+                               $PROFILE_OPTIONS \
+                               $REMOTE_OPTIONS \
+                               $SETTING_OPTIONS \
+                               $UPDATE_OPTIONS \
+                               $LOCKFILE_OPTIONS \
+                               ': :_conan_path_or_reference' \
+                        && ret=0
+                    ;;
+                (update-lock)
+                    _arguments -C \
+                               ': :_files -g \*.lock' \
+                               ': :_files -g \*.lock' && ret=0
+                    ;;
+                (build-order)
+                    _arguments -C \
+                               $HELP_OPTIONS \
+                               $BUILD_WHAT_OPTIONS \
+                               $JSON_OPTIONS \
+                               ': :_files -g \*.lock' && ret=0
+                    ;;
+            esac
+            ;;
+    esac
+
+    return ret
 }
 
 _conan-help()
