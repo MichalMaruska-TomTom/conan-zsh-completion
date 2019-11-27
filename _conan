@@ -280,7 +280,21 @@ _conan_path_or_reference() {
 # complete filename of the recipe.
 _conan_path() {
     # path                  Path to a folder containing a conanfile.py or to a
-    _path_files -/ .
+    local state_description="$1"
+
+    local expl
+    # _description [ -x ] [ -12VJ ] TAG NAME DESCR [ SPEC ... ]
+    #             TAG  NAME  DESCR         SPEC?
+    echo "For $state_description $1"  >>$LOG_FILE
+
+    _description -x conan_recipes expl "$state_description"
+    echo "pass to compadd: $expl[@]"  >>$LOG_FILE
+    # -J conan_recipes -X Completing %F{red}-J%f
+    _path_files -g 'conanfile.p?' "$expl[*]"
+    # -W '.'
+    # -F '*~'
+    #'conanfile.\{txt,py\}'
+    # _path_files -/ .
 }
 
 _conan_generator()
