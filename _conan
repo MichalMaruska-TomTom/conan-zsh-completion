@@ -617,7 +617,18 @@ _conan-search()
 
 _conan-source()
 {
+    local context state state_descr line
+    # The elements of the array state_descr are assigned the corresponding MESSAGE
+    # field from each OPTARG containing such an ACTION.
 
+    local source_options=(
+        $HELP_OPTIONS
+        $SOURCE_FOLDER_OPTIONS
+        # [Destination directory. Defaulted to current directory]
+        $INSTALL_FOLDER_OPTIONS
+        )
+    _arguments -C $source_options \
+               ":conan path: _conan_path 'conan path'"
 }
 
 local context state state_descr line
