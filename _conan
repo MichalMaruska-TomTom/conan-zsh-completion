@@ -1,5 +1,8 @@
 #compdef conan
 
+## Necessary configuration to work-around deficiencies:
+typeset -a CONAN_CMD
+CONAN_CMD=(CONAN_USER_HOME=~/conan-repo/ ~/bin/conan)
 # todo:
 # extract the settings items.
 # in future I can react on $CONAN_USER_HOME even set on the current cmdline.
@@ -16,10 +19,6 @@
 
 local LOG_FILE=/run/user/$(id -u)/tab-complete
 [[ -e $LOG_FILE ]] || touch $LOG_FILE
-
-typeset -a CONAN_CMD
-CONAN_CMD=(CONAN_USER_HOME=~/conan-repo/ ~/bin/conan)
-
 
 # conan search --raw
 _conan_local_packages() {
