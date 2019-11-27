@@ -271,7 +271,10 @@ local SOURCE_FOLDER_OPTIONS=(
 local conan_build_policies=(all never missing cascade outdated)
 
 _conan_path_or_reference() {
-    _files -/
+    echo "choose " >> $LOG_FILE
+    _conan_local_packages && return 0
+    _conan_path
+    # _files -/
 }
 
 # complete filename of the recipe.
