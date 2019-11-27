@@ -177,7 +177,11 @@ local MANIFEST_OPTIONS=(
 )
 
 ## value completions:
-local conan_build_policies=(all never missing cascade outdated)
+local conan_build_policies=(never missing cascade outdated) # all
+local BUILD_WHAT_OPTIONS=(
+    {-b,--build}"+[What to re-build: all, --build=never Never build, --build=missing,--build=cascade  --build=outdated, --build=pattern]:: :($conan_build_policies)"
+  # {-b,--build}'[Given a build policy, return an ordered list of packages that would be built from sources during the install command]: :($conan_build_policies)'
+)
 
 _conan_path_or_reference() {
     _files -/
@@ -316,7 +320,7 @@ _conan-create()
                {-tbf,--test-build-folder}'[TEST_BUILD_FOLDER]:test folder:_files -/'
                $MANIFEST_OPTIONS
                {-v,--verify}'[Verify dependencies manifests against stored ones]'
-               {-b,--build}"[--build Build all from source, --build=never Never build, --build=missing,--build=cascade  --build=outdated, --build=pattern]: :($conan_build_policies)"
+               $BUILD_WHAT_OPTIONS
                $ENV_OPTIONS
                $PROFILE_OPTIONS
                $OPTIONS_OPTIONS
@@ -426,7 +430,7 @@ _conan-info()
                         #Use '--only None' to show only references.
         '--package-filter[Print information only for packages that match the MyPackage*]'
         {-db,--dry-build}'[Apply the --build argument to output the information, as it would be done by the install command]'
-        {-b,--build}'[Given a build policy, return an ordered list of packages that would be built from sources during the install command]: :($conan_build_policies)'
+        $BUILD_WHAT_OPTIONS
         $ENV_OPTIONS
         $PROFILE_OPTIONS
         $OPTIONS_OPTIONS
