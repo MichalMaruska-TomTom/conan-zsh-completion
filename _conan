@@ -114,6 +114,16 @@ _conan_local_packages() {
     fi
 }
 
+_conan_reference()
+{
+    # this issue here is that I need:
+    # pkg/version @ so I need the file, and then '@' and again 2 levels!
+    _conan_local_packages
+
+    # _sequence
+    # _sep_parts log_items . general_items ":" storage_items
+}
+
 # plan:
 
 # complete
