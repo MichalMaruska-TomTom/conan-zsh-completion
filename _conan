@@ -124,6 +124,11 @@ _conan_reference()
     # _sep_parts log_items . general_items ":" storage_items
 }
 
+_conan_pattern_or_reference()
+{
+    _conan_reference
+}
+
 # plan:
 
 # complete
@@ -667,7 +672,7 @@ _conan-remove()
                $REMOTE_OPTIONS
                {-s,--src}'[Remove source folders]'
                {-t,--system-reqs}'[Remove system_reqs folders]'
-               ':pattern_or_reference:'
+               ': : _conan_pattern_or_reference'
     )
     _arguments -C $arguments
 }
@@ -724,6 +729,8 @@ _conan-search()
         #TABLE
         $JSON_OPTIONS
         {-rev,--revisions}'[Get a list of revisions for a reference or a package]'
+
+        ': : _conan_pattern_or_reference'
     )
 
     _arguments -C $arguments
