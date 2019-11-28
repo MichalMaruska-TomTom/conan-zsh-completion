@@ -21,10 +21,99 @@ local LOG_FILE=/run/user/$(id -u)/tab-complete
 [[ -e $LOG_FILE ]] || touch $LOG_FILE
 
 # conan search --raw
-_conan_local_packages() {
-    local storage_path=$(eval $CONAN_CMD[@] config get storage.path 2>/dev/null)
-    _path_files -/  -W "$storage_path" -g '*'
+
+_conan_package_name() {
+    # zparseopts -D -E -a opts x: X: J: V: a=all
+    local storage_path=$1
+    local names=($storage_path/*(/:t))
+    # todo: timestamp of the $storage_path controls the cache!
+    # _store_cache CACHE_IDENTIFIER PARAM ...
+
+    compstate[insert]=automenu-unambiguous
+    compadd -a -S "/"  -q -- names
 }
+
+_conan_package_version() {
+    local storage_path=$1
+    shift
+    local package=$1
+
+    local names=($storage_path/$package/*(/:t))
+    compadd -a -S "@"  -q -- names
+}
+
+_conan_package_version_user() {
+    local storage_path=$1
+    shift
+    local package=$1
+    local version=$2
+
+    local names=($storage_path/$package/$version/*(/:t))
+#    compstate[insert]=automenu-unambiguous
+    compadd -a -S "/"  -q -- names
+}
+
+_conan_package_version_user_channel() {
+    local storage_path=$1
+    shift
+    local package=$1
+    local version=$2
+    local user=$3
+
+    local names=($storage_path/$package/$version/$user/*(/:t))
+    compadd -a  -q -- names
+}
+
+_conan_local_packages() {
+    # naive:
+    # _path_files -/  -W "$storage_path" -g '*'
+
+    # split the string into 4 parts
+    # xxx / vvv @  yyy / zzz
+
+    # transfer Iprefix <- prefix
+    local package
+    local version
+    local user channel
+    local storage=$(eval $CONAN_CMD[@] config get storage.path 2>/dev/null)
+
+    if ! compset -P 1 '*/';
+    then
+        package=$PREFIX
+        # if it contains "." then no!
+        if [[ $package =~ '^\.' ]]; then
+            echo "invalid package name!"  >>$LOG_FILE
+            return 1;
+        fi
+        _conan_package_name $storage
+    else
+        package=$IPREFIX[0,-2]
+        # drop the last '/'
+        ((len= $#package + 1 ))
+        if ! compset -P 1 '*@';
+        then
+            version=$PREFIX
+            _conan_package_version $storage $package
+        else
+            # minus ...
+            version=$IPREFIX[((len + 1)),-2]
+            (( len += $#version + 1 ))
+
+            if ! compset -P 1 '*/'
+            then
+                user=$PREFIX
+                _conan_package_version_user $storage $package $version
+            else
+                user=$IPREFIX[(( len + 1)),-2]
+                (( len += $#user + 1 ))
+                channel=$PREFIX
+                # compset ?
+                _conan_package_version_user_channel $storage $package $version $user
+            fi
+        fi
+    fi
+}
+
 # plan:
 
 # complete
