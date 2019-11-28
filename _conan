@@ -710,6 +710,8 @@ typeset -A opt_args
 
 integer ret=1
 _arguments -C \
+           {-v,--version}'[get the Conan version]:' \
+           $HELP_OPTIONS \
            '(-): :->command' \
            '(-)*:: :->option-or-argument' && return 0
 
