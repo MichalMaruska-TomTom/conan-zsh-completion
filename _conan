@@ -506,14 +506,9 @@ _conan-profile()
     _arguments -C \
                $HELP_OPTIONS \
                ': :(list show new update get remove)' \
-               ': :->argument' && ret=0
-    # todo: show -> complete.
-    # list
-    # show ... name
-    # new
-    # update  ... name
-    # gete ...name
-    # remove ... name
+               '*:: :->argument' && return 0
+
+    # dispatch to sub-handler!
     case $state in
         (argument)
             # context -> last word?
@@ -522,19 +517,19 @@ _conan-profile()
             # :complete:conan-profile:argument-2
             # so rewrite it to:
             # :complete:conan-profile-show:
-            local curcontext=${curcontext%:*:*}:conan-$words[1]-$words[2]:
+            local curcontext=${curcontext%:*:*}:conan-profile-$words[1]:
             echo "modified to $curcontext" >> $LOG_FILE
 
             # _tags:comptags:36: nesting level too deep
-            if ! _call_function ret _conan-$words[1]-$words[2]; then
+            if ! _call_function ret _conan-profile-$words[1]; then
                 _message "unknown sub-command: $words[1]"
             fi
             ;;
         *)
-            _message "unknown sub-command: $words[2]"
+            _message "unknown sub-command: $words[1]"
             ;;
     esac
-    # return $ret
+    return $ret
 }
 
 
