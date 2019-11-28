@@ -485,6 +485,18 @@ _conan-package()
     #  path Path to a folder containing a conanfile.py or to a recipe file e.g., my_folder/conanfile.py
 }
 
+_conan-profile-get()
+{
+    local context state state_descr line
+    typeset -A opt_args
+
+    # -O NAME .. Pass the elements of the array NAME as arguments to functions
+    # called to execute ACTIONs.  This is discussed in detail below.
+    _arguments -C : \
+               ':profile-item:(settings.compiler settings.os)' \
+               ': : _conan_profile_name'
+}
+
 _conan-profile-show()
 {
     echo "_conan-profile-show: $curcontext $CURRENT" >> $LOG_FILE
