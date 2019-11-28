@@ -139,6 +139,7 @@ local REMOTE_OPTIONS=(
 #  -r REMOTE, --remote REMOTE Look in the specified remote server
 
 local HELP_OPTIONS=('(-)'{-h,--help}'[show help message and exit]')
+local HELP_OPTIONS_PROFILE=('(-)'{-h,--help}'[show (profile) help message and exit]')
 
 local INSTALL_OPTIONS=(
     {-if,--install-folder}'[Directory containing the conaninfo.txt and conanbuildinfo.txt files]:install dir:_files -/'
@@ -565,7 +566,7 @@ _conan-profile()
     typeset -A opt_args
     # integer ret=1
     _arguments -C \
-               $HELP_OPTIONS \
+               $HELP_OPTIONS_PROFILE \
                ': :(list show new update get remove)' \
                '*:: :->argument' && return 0
 
