@@ -485,6 +485,13 @@ _conan-package()
     #  path Path to a folder containing a conanfile.py or to a recipe file e.g., my_folder/conanfile.py
 }
 
+_conan-profile-list()
+{
+    local context state state_descr line
+    typeset -A opt_args
+
+    _arguments -C $HELP_OPTIONS
+}
 _conan-profile-get()
 {
     local context state state_descr line
