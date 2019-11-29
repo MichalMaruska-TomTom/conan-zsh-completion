@@ -400,7 +400,9 @@ _conan-get()
     _arguments -C \
                $HELP_OPTIONS \
                $REMOTE_OPTIONS \
-               $RAW_OPTIONS
+               $RAW_OPTIONS \
+               ': :_conan_reference' \
+               ': : _conan_path_inside'  && return 0
 }
 
 
