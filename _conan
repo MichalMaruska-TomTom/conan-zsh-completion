@@ -155,6 +155,8 @@ local LOCKFILE_OPTIONS=({-l,--lockfile}"[Path to a lockfile or folder containing
 # todo: cache it!
 typeset -a conan_profiles
 
+# array, global, unique (no duplicates),
+typeset -agU conan_profile_items
 local INSTALL_FOLDER_OPTIONS=({-if,--install-folder}'[Directory containing the conaninfo.txt and conanbuildinfo.txt files]:install dir:_files -/')
 
 local BUILD_FOLDER_OPTIONS=({-bf,--build-folder}'[Build folder]:build directories:_files -/')
@@ -485,6 +487,43 @@ _conan-package()
     #  path Path to a folder containing a conanfile.py or to a recipe file e.g., my_folder/conanfile.py
 }
 
+# I need
+_conan_profile_item()
+{
+    # choose one:
+    local cache_identifier="conan-profile-items"
+
+    if ! _retrieve_cache $cache_identifier;
+    then
+        conan_profile_items=(
+            $( ~/tests/yaml/token ~/conan-repo/.conan/settings.yml |
+                   sed -n -e 's/saving key /settings./p' ) )
+
+        _store_cache $cache_identifier conan_profile_items
+    fi
+
+    _multi_parts '.' conan_profile_items
+}
+
+_conan-profile-remove()
+{
+    local context state state_descr line
+    typeset -A opt_args
+
+    _arguments -C ':profile-item:_conan_profile_item' \
+               ': : _conan_profile_name' && ret=0
+}
+
+_conan-profile-update()
+{
+    local context state state_descr line
+    typeset -A opt_args
+
+    # todo  =value
+    _arguments -C ':profile-item:_conan_profile_item' \
+               ': : _conan_profile_name' && ret=0
+}
+
 _conan-profile-list()
 {
     local context state state_descr line
@@ -500,21 +539,18 @@ _conan-profile-get()
     # -O NAME .. Pass the elements of the array NAME as arguments to functions
     # called to execute ACTIONs.  This is discussed in detail below.
     _arguments -C : \
-               ':profile-item:(settings.compiler settings.os)' \
+               ':profile-item:_conan_profile_item' \
                ': : _conan_profile_name'
 }
 
 _conan-profile-show()
 {
-    echo "_conan-profile-show: $curcontext $CURRENT" >> $LOG_FILE
-    # $words[$CURRENT]
-    _conan_profile_name
-    # _arguments -C '2:profile-name:(This That)'
+    local context state state_descr line
+    typeset -A opt_args
 
-    #'1:profile-name:(thiS thaT)' \
-        # here:
-        #       '*:profile-name:(this that)' &&
-    # ret=0
+    echo "_conan-profile-show: $curcontext $CURRENT" >> $LOG_FILE
+    _arguments -C $HELP_OPTIONS \
+               ':profile-name: _conan_profile_name'
 }
 
 _conan-profile()
@@ -531,12 +567,13 @@ _conan-profile()
     case $state in
         (argument)
             # context -> last word?
-            echo $curcontext >> $LOG_FILE
-
             # :complete:conan-profile:argument-2
             # so rewrite it to:
             # :complete:conan-profile-show:
+            # assert $words[1] = profile
+            #
             local curcontext=${curcontext%:*:*}:conan-profile-$words[1]:
+
             echo "modified to $curcontext" >> $LOG_FILE
 
             # _tags:comptags:36: nesting level too deep
