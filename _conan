@@ -564,8 +564,7 @@ _conan-package()
         $SOURCE_FOLDER_OPTIONS
     )
 
-    _arguments -C $arguments
-    #positional arguments:
+    _arguments -C $arguments ': :_conan_path'
     #  path Path to a folder containing a conanfile.py or to a recipe file e.g., my_folder/conanfile.py
 }
 
