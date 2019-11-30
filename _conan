@@ -191,6 +191,11 @@ _conan_path_or_reference() {
     _files -/
 }
 
+# conan get ref file
+_conan_path_inside()
+{
+}
+
 # complete filename of the recipe.
 _conan_path() {
     # path                  Path to a folder containing a conanfile.py or to a
