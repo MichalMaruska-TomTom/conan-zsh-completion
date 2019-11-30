@@ -107,7 +107,8 @@ _conan_commands1()
 
 ## common options:
 local ENV_OPTIONS=(
-    {-e,--env}'[set ENV variables]'::_env
+    {-e,--env}'[set ENV variables]:variable:_parameters'
+    # CC CXX CFLAGS...
     # -e ENV, --env ENV     Environment variables that will be set during the package build, -e CXX=/usr/bin/clang++
     )
 
