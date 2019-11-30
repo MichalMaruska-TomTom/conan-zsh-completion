@@ -493,7 +493,7 @@ _conan-info()
         $HELP_OPTIONS
         '--paths[Show package paths in local cache]'
         {-bo,--build-order}'[given a modified reference, return an ordered list to build (CI)]'
-        {-g,--graph}'[Creates file with project dependencies graph.DOT/HTML depending on the filename]'
+        {-g,--graph}'[Creates file with project dependencies graph.DOT/HTML depending on the filename]: :_files -g \*.lock'
         $INSTALL_OPTIONS
         $JSON_OPTIONS
         {-n,--only}'[Show only the specified fields]: : (id build_id remote url license requires update required date author)'
