@@ -286,9 +286,24 @@ _conan-config() {
 
     _arguments -C \
                $HELP_OPTIONS \
-               ': :(get home install rm set)'
+               ':subcommand:(get home install rm set)' \
+               '*:: :->subcommand' && return 0
+
     # todo: how to continue?
     # mmc: message must be present. Otherwise?
+
+    case $state in
+        (subcommand)
+            # Modify the curcontext parameter for an action of the form
+            local cmd=$words[1]
+            local curcontext=${curcontext%:*:*}:conan-config-$cmd:
+            if ! _call_function ret _conan-config-$cmd; then
+                _message "unknown sub-command: $cmd"
+            else
+                return $ret
+            fi
+            ;;
+    esac
 }
 
 _conan-copy()
