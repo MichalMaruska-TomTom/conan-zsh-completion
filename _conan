@@ -526,22 +526,22 @@ _conan-install(){
 
     _arguments -C \
         $HELP_OPTIONS \
+        {-g,--generator}'[Generator]:generator:_conan_generator' \
         \
         $INSTALL_FOLDER_OPTIONS \
         $MANIFEST_OPTIONS \
-        $ENV_OPTIONS \
         $VERIFY_OPTIONS \
         '--no-imports[avoid running imports]'  \
-        $PROFILE_OPTIONS \
+        $JSON_OPTIONS \
+        $BUILD_WHAT_OPTIONS \
+        $ENV_OPTIONS \
         $OPTIONS_OPTIONS \
-        $SETTING_OPTIONS \
-        {-g,--generator}'[Generator]:generator:_conan_generator' \
+        $PROFILE_OPTIONS \
         $REMOTE_OPTIONS \
+        $SETTING_OPTIONS \
         $UPDATE_OPTIONS \
         $LOCKFILE_OPTIONS \
         ': :_conan_path_or_reference'
-
-# '(-g --generator)' can repeat
 }
 
 _conan-package()
