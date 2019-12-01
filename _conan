@@ -153,8 +153,7 @@ local LOCKFILE_OPTIONS=({-l,--lockfile}"[Path to a lockfile or folder containing
 #todo: "can be updated if packages change"
 
 # todo: cache it!
-typeset -a conan_profiles
-
+typeset -agU conan_profiles
 # array, global, unique (no duplicates),
 typeset -agU conan_profile_items
 local INSTALL_FOLDER_OPTIONS=({-if,--install-folder}'[Directory containing the conaninfo.txt and conanbuildinfo.txt files]:install dir:_files -/')
@@ -191,11 +190,18 @@ _conan_generator()
 
 _conan_profile_name(){
     # integer ret=1
-    # local
-    if [[ "$#conan_profiles" = 0 ]]
+    local cache_identifier="conan-profiles"
+
+    # if ( [[ ${(P)+perl_modules} -eq 0 ]] || _cache_invalid ${perl_modules#_} ) &&
+
+    if [[ "$#conan_profiles" = 0 ]] ||
+           ! _retrieve_cache $cache_identifier
     then
+        # see _perl_modules in
+        # _cache_invalid
         echo "reading in the profiles" >>$LOG_FILE
         conan_profiles=( $(eval $CONAN_CMD[@] profile list 2>>$LOG_FILE) )
+        _store_cache $cache_identifier conan_profiles
     fi
 
     foreach line ($conan_profiles) {
