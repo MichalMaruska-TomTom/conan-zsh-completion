@@ -376,12 +376,15 @@ _conan-editable()
                ': :(add remove list)'
 }
 
-# so message is compulsary?
 _conan-export() {
     _arguments -C \
         $HELP_OPTIONS \
         $KEEP_SOURCE_OPTIONS \
-        $LOCKFILE_OPTIONS
+        $LOCKFILE_OPTIONS \
+        ':conan recipe: _conan_path' \
+        ': :_conan_reference'
+    # 1.20+
+    #  '--ignore-dirty:'
 }
 
 _conan-export-pkg() {
