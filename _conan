@@ -176,6 +176,12 @@ _conan_path_or_reference() {
     _files -/
 }
 
+# complete filename of the recipe.
+_conan_path() {
+    # path                  Path to a folder containing a conanfile.py or to a
+    _path_files -/ .
+}
+
 _conan_generator()
 {
     local generators=(cmake b2 makefile)
