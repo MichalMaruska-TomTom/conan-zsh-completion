@@ -715,6 +715,36 @@ _conan-source()
                ":conan path: _conan_path 'conan path'"
 }
 
+_conan-upload()
+{
+    local context state state_descr line
+
+    local upload_options=(
+        $HELP_OPTIONS
+        # -p  obsolete!
+        $QUERY_OPTIONS
+        $REMOTE_OPTIONS
+        '--all[Upload both package recipe and packages]'
+        # exclusive:
+        '(--force)--skip-upload[Do not upload anything, just run the checks and the compression]'
+        '(--skip-upload)--force[Do not check conan recipe date, override remote with local]'
+        #
+        '--check[Perform an integrity check, using the manifests, before upload]'
+        {-c,--confirm}'[Upload all matching recipes without confirmation]'
+        '--retry[In case of fail retries to upload again the specified times]: RETRY'
+
+        '--retry-wait[Wait specified seconds before retry again]:seconds:'
+
+        '-no[Uploads package only if recipe is the same as the remote one]: :(all recipe)'
+        '--no-overwrite: :(all recipe)'
+        $JSON_OPTIONS
+        '--parallel[Upload files in parallel using multiple threads(default 8)]'
+    )
+    _arguments -C $upload_options \
+               ":conan path: _conan_pattern_or_reference"
+}
+
+
 local context state state_descr line
 typeset -A opt_args
 
