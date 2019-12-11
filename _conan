@@ -369,11 +369,40 @@ _conan-download() {
     #todo: '::_conan_reference
 }
 
+_conan-editable-add()
+{
+    echo "_conan-editable-add" >> $LOG_FILE
+    _arguments -C \
+               ": : _conan_path" \
+               ": :_conan_reference" && return 0
+}
+
+_conan-editable-remove()
+{
+    _arguments -C \
+               ": :_conan_reference" && return 0
+}
+
 _conan-editable()
 {
     _arguments -C \
                $HELP_OPTIONS \
-               ': :(add remove list)'
+               ': :(add remove list)' \
+               '*:: :->subcommand' && return 0
+
+    case $state in
+        (subcommand)
+            # Modify the curcontext parameter for an action of the form
+            local cmd=$words[1]
+            local curcontext=${curcontext%:*:*}:conan-editable-$cmd:
+            if ! _call_function ret _conan-editable-$cmd; then
+                _message "unknown sub-command: $cmd"
+            else
+                return $ret
+            fi
+            ;;
+    esac
+
 }
 
 _conan-export() {
