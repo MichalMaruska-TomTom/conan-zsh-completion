@@ -126,12 +126,11 @@ local OPTIONS_OPTIONS=(
     {-o,--options}'[options]:option:_conan_options'
     )
 
-local SETTING_OPTIONS=({-s,--settings}'[settings override]::_conan_setting'
-
-                 #-s SETTINGS, --settings SETTINGS
-                 #       Settings to build the package, overwriting the
-                 #       defaults. e.g., -s compiler=gcc
-                )
+local SETTING_OPTIONS=(
+    '*'{-s,--settings}'[settings override]: :_conan_setting'
+    #       Settings to build the package, overwriting the
+    #       defaults. e.g., -s compiler=gcc
+)
 
 local REMOTE_OPTIONS=(
     {-r,--remote}'[look in the specified remote server]:conan remote:_conan_remote'
@@ -258,6 +257,24 @@ _conan_options_value()
         # echo "adding $line" >> $LOG_FILE
         compadd -- "$line" && ret=0
     }
+}
+
+_conan_setting()
+{
+    local description=(
+        "compiler:compiler"
+        "compiler.libcxx:libc++"
+        "compiler.version:"
+        "build_type"
+    )
+
+    _describe "override setting" description
+
+    # _values -s = 'description' \
+    #         '*foo[bar]' \
+    #         '(two)*one[number]:first count:' \
+    #         'two[another number]::second count:(1 2 3)'
+
 }
 
 ### `Commands'
