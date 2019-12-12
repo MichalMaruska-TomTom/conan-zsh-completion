@@ -280,12 +280,6 @@ _conan-build () {
 
 }
 
-_conan-config-set() {
-    _arguments -C \
-               $HELP_OPTIONS \
-               ":item to print::"
-}
-
 # prepend each with log.
 local log_items=(run_to_output run_to_file level print_run_commands)
 local general_items=(default_profile
@@ -297,12 +291,7 @@ local general_items=(default_profile
                     )
 
 local storage_items=(path)
-
-_conan-config-get() {
-    # so how to complete xxx.yy<TAB> ?
-    #
-    # -O NAME ...Pass the elements of the array NAME as arguments to functions
-    # called to execute ACTIONs.  This is discussed in detail below.
+_conan_config_item() {
     local all=( ${log_items/#/log.}
                 ${general_items/#/general.}
                 ${storage_items/#/storage.}
@@ -310,11 +299,20 @@ _conan-config-get() {
                 hooks
               )
 
-    #_multi_parts '.' all
-    # I need the 2nd to be dependent!
-    # _sequence
-    _sep_parts log_items . general_items ":" storage_items
-# see __git_config_option-or-value () {
+    _multi_parts '.' all
+}
+
+_conan-config-set() {
+    _arguments -C \
+               $HELP_OPTIONS \
+               ":config item:_conan_config_item"
+    # todo: =value
+}
+
+_conan-config-get() {
+    _arguments -C \
+               $HELP_OPTIONS \
+               ":config item:_conan_config_item"
 }
 
 _conan-config() {
