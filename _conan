@@ -21,10 +21,114 @@ local LOG_FILE=/run/user/$(id -u)/tab-complete
 [[ -e $LOG_FILE ]] || touch $LOG_FILE
 
 # conan search --raw
-_conan_local_packages() {
-    local storage_path=$(eval $CONAN_CMD[@] config get storage.path 2>/dev/null)
-    _path_files -/  -W "$storage_path" -g '*'
+
+_conan_package_name() {
+    # zparseopts -D -E -a opts x: X: J: V: a=all
+    local storage_path=$1
+    local names=($storage_path/*(/:t))
+    # todo: timestamp of the $storage_path controls the cache!
+    # _store_cache CACHE_IDENTIFIER PARAM ...
+
+    compstate[insert]=automenu-unambiguous
+    compadd -a -S "/"  -q -- names
 }
+
+_conan_package_version() {
+    local storage_path=$1
+    shift
+    local package=$1
+
+    local names=($storage_path/$package/*(/:t))
+    compadd -a -S "@"  -q -- names
+}
+
+_conan_package_version_user() {
+    local storage_path=$1
+    shift
+    local package=$1
+    local version=$2
+
+    local names=($storage_path/$package/$version/*(/:t))
+#    compstate[insert]=automenu-unambiguous
+    compadd -a -S "/"  -q -- names
+}
+
+_conan_package_version_user_channel() {
+    local storage_path=$1
+    shift
+    local package=$1
+    local version=$2
+    local user=$3
+
+    local names=($storage_path/$package/$version/$user/*(/:t))
+    compadd -a  -q -- names
+}
+
+_conan_local_packages() {
+    # naive:
+    # _path_files -/  -W "$storage_path" -g '*'
+
+    # split the string into 4 parts
+    # xxx / vvv @  yyy / zzz
+
+    # transfer Iprefix <- prefix
+    local package
+    local version
+    local user channel
+    local storage=$(eval $CONAN_CMD[@] config get storage.path 2>/dev/null)
+
+    if ! compset -P 1 '*/';
+    then
+        package=$PREFIX
+        # if it contains "." then no!
+        if [[ $package =~ '^\.' ]]; then
+            echo "invalid package name!"  >>$LOG_FILE
+            return 1;
+        fi
+        _conan_package_name $storage
+    else
+        package=$IPREFIX[0,-2]
+        # drop the last '/'
+        ((len= $#package + 1 ))
+        if ! compset -P 1 '*@';
+        then
+            version=$PREFIX
+            _conan_package_version $storage $package
+        else
+            # minus ...
+            version=$IPREFIX[((len + 1)),-2]
+            (( len += $#version + 1 ))
+
+            if ! compset -P 1 '*/'
+            then
+                user=$PREFIX
+                _conan_package_version_user $storage $package $version
+            else
+                user=$IPREFIX[(( len + 1)),-2]
+                (( len += $#user + 1 ))
+                channel=$PREFIX
+                # compset ?
+                _conan_package_version_user_channel $storage $package $version $user
+            fi
+        fi
+    fi
+}
+
+_conan_reference()
+{
+    # this issue here is that I need:
+    # pkg/version @ so I need the file, and then '@' and again 2 levels!
+    _conan_local_packages
+
+    # _sequence
+    # _sep_parts log_items . general_items ":" storage_items
+}
+
+_conan_pattern_or_reference()
+{
+    _conan_reference
+}
+
 # plan:
 
 # complete
@@ -139,6 +243,7 @@ local REMOTE_OPTIONS=(
 #  -r REMOTE, --remote REMOTE Look in the specified remote server
 
 local HELP_OPTIONS=('(-)'{-h,--help}'[show help message and exit]')
+local HELP_OPTIONS_PROFILE=('(-)'{-h,--help}'[show (profile) help message and exit]')
 
 local INSTALL_OPTIONS=(
     {-if,--install-folder}'[Directory containing the conaninfo.txt and conanbuildinfo.txt files]:install dir:_files -/'
@@ -153,8 +258,9 @@ local LOCKFILE_OPTIONS=({-l,--lockfile}"[Path to a lockfile or folder containing
 #todo: "can be updated if packages change"
 
 # todo: cache it!
-typeset -a conan_profiles
-
+typeset -agU conan_profiles
+# array, global, unique (no duplicates),
+typeset -agU conan_profile_items
 local INSTALL_FOLDER_OPTIONS=({-if,--install-folder}'[Directory containing the conaninfo.txt and conanbuildinfo.txt files]:install dir:_files -/')
 
 local BUILD_FOLDER_OPTIONS=({-bf,--build-folder}'[Build folder]:build directories:_files -/')
@@ -188,7 +294,10 @@ local BUILD_WHAT_OPTIONS=(
 )
 
 _conan_path_or_reference() {
-    _files -/
+    echo "choose " >> $LOG_FILE
+    _conan_local_packages && return 0
+    _conan_path
+    # _files -/
 }
 
 # conan get ref file
@@ -199,7 +308,21 @@ _conan_path_inside()
 # complete filename of the recipe.
 _conan_path() {
     # path                  Path to a folder containing a conanfile.py or to a
-    _path_files -/ .
+    local state_description="$1"
+
+    local expl
+    # _description [ -x ] [ -12VJ ] TAG NAME DESCR [ SPEC ... ]
+    #             TAG  NAME  DESCR         SPEC?
+    echo "For $state_description $1"  >>$LOG_FILE
+
+    _description -x conan_recipes expl "$state_description"
+    echo "pass to compadd: $expl[@]"  >>$LOG_FILE
+    # -J conan_recipes -X Completing %F{red}-J%f
+    _path_files -g 'conanfile.p?' "$expl[*]"
+    # -W '.'
+    # -F '*~'
+    #'conanfile.\{txt,py\}'
+    # _path_files -/ .
 }
 
 _conan_generator()
@@ -210,11 +333,18 @@ _conan_generator()
 
 _conan_profile_name(){
     # integer ret=1
-    # local
-    if [[ "$#conan_profiles" = 0 ]]
+    local cache_identifier="conan-profiles"
+
+    # if ( [[ ${(P)+perl_modules} -eq 0 ]] || _cache_invalid ${perl_modules#_} ) &&
+
+    if [[ "$#conan_profiles" = 0 ]] ||
+           ! _retrieve_cache $cache_identifier
     then
+        # see _perl_modules in
+        # _cache_invalid
         echo "reading in the profiles" >>$LOG_FILE
         conan_profiles=( $(eval $CONAN_CMD[@] profile list 2>>$LOG_FILE) )
+        _store_cache $cache_identifier conan_profiles
     fi
 
     foreach line ($conan_profiles) {
@@ -319,15 +449,65 @@ _conan-build () {
 
 }
 
+# prepend each with log.
+local log_items=(run_to_output run_to_file level print_run_commands)
+local general_items=(default_profile
+                     compression_level
+                     sysrequires_sudo
+                     request_timeout
+                     revisions_enabled
+                     default_package_id_mode
+                    )
+
+local storage_items=(path)
+_conan_config_item() {
+    local all=( ${log_items/#/log.}
+                ${general_items/#/general.}
+                ${storage_items/#/storage.}
+                proxies
+                hooks
+              )
+
+    _multi_parts '.' all
+}
+
+_conan-config-set() {
+    _arguments -C \
+               $HELP_OPTIONS \
+               ":config item:_conan_config_item"
+    # todo: =value
+}
+
+_conan-config-get() {
+    _arguments -C \
+               $HELP_OPTIONS \
+               ":config item:_conan_config_item"
+}
+
 _conan-config() {
     local context state state_descr line
     typeset -A opt_args
 
     _arguments -C \
                $HELP_OPTIONS \
-               ': :(get home install rm set)'
+               ':subcommand:(get home install rm set)' \
+               '*:: :->subcommand' && return 0
+
     # todo: how to continue?
     # mmc: message must be present. Otherwise?
+
+    case $state in
+        (subcommand)
+            # Modify the curcontext parameter for an action of the form
+            local cmd=$words[1]
+            local curcontext=${curcontext%:*:*}:conan-config-$cmd:
+            if ! _call_function ret _conan-config-$cmd; then
+                _message "unknown sub-command: $cmd"
+            else
+                return $ret
+            fi
+            ;;
+    esac
 }
 
 _conan-copy()
@@ -600,17 +780,70 @@ _conan-package()
     #  path Path to a folder containing a conanfile.py or to a recipe file e.g., my_folder/conanfile.py
 }
 
+# I need
+_conan_profile_item()
+{
+    # choose one:
+    local cache_identifier="conan-profile-items"
+
+    if ! _retrieve_cache $cache_identifier;
+    then
+        conan_profile_items=(
+            $( ~/tests/yaml/token ~/conan-repo/.conan/settings.yml |
+                   sed -n -e 's/saving key /settings./p' ) )
+
+        _store_cache $cache_identifier conan_profile_items
+    fi
+
+    _multi_parts '.' conan_profile_items
+}
+
+_conan-profile-remove()
+{
+    local context state state_descr line
+    typeset -A opt_args
+
+    _arguments -C ':profile-item:_conan_profile_item' \
+               ': : _conan_profile_name' && ret=0
+}
+
+_conan-profile-update()
+{
+    local context state state_descr line
+    typeset -A opt_args
+
+    # todo  =value
+    _arguments -C ':profile-item:_conan_profile_item' \
+               ': : _conan_profile_name' && ret=0
+}
+
+_conan-profile-list()
+{
+    local context state state_descr line
+    typeset -A opt_args
+
+    _arguments -C $HELP_OPTIONS
+}
+_conan-profile-get()
+{
+    local context state state_descr line
+    typeset -A opt_args
+
+    # -O NAME .. Pass the elements of the array NAME as arguments to functions
+    # called to execute ACTIONs.  This is discussed in detail below.
+    _arguments -C : \
+               ':profile-item:_conan_profile_item' \
+               ': : _conan_profile_name'
+}
+
 _conan-profile-show()
 {
-    echo "_conan-profile-show: $curcontext $CURRENT" >> $LOG_FILE
-    # $words[$CURRENT]
-    _conan_profile_name
-    # _arguments -C '2:profile-name:(This That)'
+    local context state state_descr line
+    typeset -A opt_args
 
-    #'1:profile-name:(thiS thaT)' \
-        # here:
-        #       '*:profile-name:(this that)' &&
-    # ret=0
+    echo "_conan-profile-show: $curcontext $CURRENT" >> $LOG_FILE
+    _arguments -C $HELP_OPTIONS \
+               ':profile-name: _conan_profile_name'
 }
 
 _conan-profile()
@@ -619,37 +852,33 @@ _conan-profile()
     typeset -A opt_args
     # integer ret=1
     _arguments -C \
-               $HELP_OPTIONS \
+               $HELP_OPTIONS_PROFILE \
                ': :(list show new update get remove)' \
-               ': :->argument' && ret=0
-    # todo: show -> complete.
-    # list
-    # show ... name
-    # new
-    # update  ... name
-    # gete ...name
-    # remove ... name
+               '*:: :->argument' && return 0
+
+    # dispatch to sub-handler!
     case $state in
         (argument)
             # context -> last word?
-            echo $curcontext >> $LOG_FILE
-
             # :complete:conan-profile:argument-2
             # so rewrite it to:
             # :complete:conan-profile-show:
-            local curcontext=${curcontext%:*:*}:conan-$words[1]-$words[2]:
+            # assert $words[1] = profile
+            #
+            local curcontext=${curcontext%:*:*}:conan-profile-$words[1]:
+
             echo "modified to $curcontext" >> $LOG_FILE
 
             # _tags:comptags:36: nesting level too deep
-            if ! _call_function ret _conan-$words[1]-$words[2]; then
+            if ! _call_function ret _conan-profile-$words[1]; then
                 _message "unknown sub-command: $words[1]"
             fi
             ;;
         *)
-            _message "unknown sub-command: $words[2]"
+            _message "unknown sub-command: $words[1]"
             ;;
     esac
-    # return $ret
+    return $ret
 }
 
 
@@ -666,7 +895,7 @@ _conan-remove()
                $REMOTE_OPTIONS
                {-s,--src}'[Remove source folders]'
                {-t,--system-reqs}'[Remove system_reqs folders]'
-               ':pattern_or_reference:'
+               ': : _conan_pattern_or_reference'
     )
     _arguments -C $arguments
 }
@@ -723,6 +952,8 @@ _conan-search()
         #TABLE
         $JSON_OPTIONS
         {-rev,--revisions}'[Get a list of revisions for a reference or a package]'
+
+        ': : _conan_pattern_or_reference'
     )
 
     _arguments -C $arguments
