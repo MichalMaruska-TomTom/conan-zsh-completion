@@ -1,0 +1,11 @@
+Source: conan-zsh-completion
+Section: misc
+Priority: extra
+Maintainer: Michal Maruska <mmaruska@gmail.com>
+Build-Depends: debhelper (>= 7)
+Standards-Version: 3.7.2
+
+Package: conan-zsh-completion
+Architecture: all
+Depends: ${misc:Depends}, zsh
+Description: Just the completion
