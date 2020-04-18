@@ -1,0 +1,59 @@
+conan-zsh-completion (0.1.1) unstable; urgency=medium
+
+  [ Michal Maruska ]
+  * Initial commit
+  * working version (with logfile)
+  * _conan_remote
+  * download
+  * canon-create + json_options
+  * graph & help
+  * local INSTALL, BUILD, SOURCE, PACKAGE    _FOLDER_OPTIONS
+  * local & reshuffle + new commands1
+  * Use help_opts
+  * _conan-inspect
+  * _conan-inspect: attributes
+  * conan-package
+  * export-pkg
+  * conan-get
+  * _conan-remote-list not connected!
+  * _conan_path --- only rudimentary.
+  * trivial _conan-search
+  * describe the configuration -- workaround
+  * query options
+  * conan-source rudimentary
+  * manifest* options
+  * BUILD_WHAT_OPTIONS
+  * improve SETTING_OPTIONS to basic settings.
+  *  _conan-graph: upgrade to handle separate sub-commands
+  * VERIFY_OPTIONS
+  * reshuffle _conan-install
+  * Support global conan options
+  * conan get: use the _conan_reference
+  * env -> specific parameters
+  * new _conan_path_inside
+  * _conan-package: also _conan_path ?
+  * info --graph *.lock files ... unofficial!
+  * _conan-export: --ignore-dirty & comment
+  * upload:
+  * conan editable
+  *  _conan-profile: clean to use :: to shift (process the rest-of-the-line in the sub-handlers)
+  * initial _conan-profile-get
+  * trivial _conan-profile-list
+  * _conan_profile_item & all profile subcommands
+  * cache the profile names
+  * useless distinctive HELP
+  * Implement _conan_local_packages with 4 subfunctions
+  * _conan_reference -> local
+  * _conan_path_or_reference should use the local_ & fall-back to filename
+  * implement conan_path with 1 argument ???
+  * introduce _conan_pattern_or_reference & use (remove, search)
+  * _conan-config: try to complete the post-subcommand parameters.
+  * _conan-config-get: using _sep_parts, and hardcoded entire graph?
+  * _conan-config-set rudimentary
+  * Extract _conan_config_item() and use it inside -get & -set.
+  * comments!
+  * Add some links to competition
+  * Add a Makefile to install
+  * Add debianization
+
+ -- Michal Maruska <mmaruska@gmail.com>  Sat, 18 Apr 2020 15:20:29 +0200
